@@ -48,6 +48,7 @@ def register_author(request):
 
         user = User.objects.create(first_name = fname, last_name = lname, email = auth_email, password = auth_password, username = auth_email)
         user.set_password(auth_password)
+        user.is_staff = True
         user.save()
         author = Author.objects.create(user = user, bio = "Sumit")
         author.save()
