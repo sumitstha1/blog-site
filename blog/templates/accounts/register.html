@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 
 {% block content %}
-<form method='POST' class="container my-5">
+<form method='POST' class="container my-5" action="{% url 'register' %}">
 {% csrf_token %}
 {% include "base/alert.html" %}
     <div class="input-group">
