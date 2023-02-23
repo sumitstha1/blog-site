@@ -2,10 +2,104 @@ from django.shortcuts import render, HttpResponse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+import uuid
 from django.contrib import messages
 from .models import *
+from .serializers import *
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from base.rest_permission import AdminPermission
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
 # Create your views here.
+class SuperUserCreationAPIView(APIView):
+    def get(self, request):
+        user = User.objects.filter(is_superuser = True)
+        serializer = AdminSerializer(user, many=True)
+        context = {
+            "status_code": 200,
+            "message": "Admin Users",
+            "Data": serializer.data,
+            "error": []
+        }
+        return Response(context, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        password1 = request.data['password1']
+        password2 = request.data['password2']
+        if password1 == password2:
+            data = {
+                'username': request.data.get('username'),
+                'email': request.data.get('email'),
+                'password': password1,
+                'is_staff': True,
+                'is_active': True,
+                'is_superuser': True
+            }
+            serializer = AdminSerializer(data=data)
+        
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserAPIView(APIView):
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        context = {
+            "status_code": 200,
+            "message": "Users",
+            "Data": serializer.data,
+            "error": []
+        }
+        return Response(context, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AuthorAPIView(APIView):
+    def get(self, request):
+        author = Author.objects.all()
+        serializer = AuthorSerializer(author, many=True)
+        context = {
+            "status_code": 200,
+            "message": "Authors",
+            "Data": serializer.data,
+            "error": []
+        }
+        return Response(context, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        email_token = str(uuid.uuid4())
+        data = {
+            'user': {
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+                'username': request.data['email'],
+                'email': request.data.get('email'),
+                'password': request.data.get('password'),
+                'is_staff': True
+            },
+            'bio': request.data.get('bio'),
+            'field': request.data.get('field'),
+            'profile_picture': request.data.get('profile_picture'),
+            'email_token': email_token,
+            'is_email_verified': False
+        }
+        serializer = AuthorSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def login(request):
     return render(request, 'accounts/login.html')

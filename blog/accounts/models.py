@@ -13,10 +13,10 @@ class Genders(BaseModel):
     gender_name = models.CharField(max_length=10)
 
 class Author(BaseModel):
-    profile_picture = models.ImageField(upload_to='author_picture')
+    profile_picture = models.ImageField(upload_to='author_picture', null=True, blank=True)
     user = models.OneToOneField(User, related_name='author_profile', on_delete=models.CASCADE)
     bio = models.TextField(null=True, blank=True)
-    field = models.CharField(max_length=50)
+    field = models.CharField(max_length=50, null=True, blank=True)
     url = models.URLField(null=True, blank=True)
     email_token = models.CharField(max_length=100, null=True, blank=True)
     is_email_verified = models.BooleanField(default=False)
