@@ -102,6 +102,41 @@ class AuthorAPIView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class AuthorAPIViewByID(APIView):
+    def get_object(self, pk):
+        try:
+            return Author.objects.get(pk = pk)
+        except:
+            return None
+
+    def get(self, request, pk):
+        author_instance = self.get_object(pk)
+        if not author_instance:
+            return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = AuthorSerializer(author_instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        author_instance = self.get_object(pk)
+        data = {
+            'user': {
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+                'password': request.data.get('password'),
+            },
+            'bio': request.data.get('bio'),
+            'field': request.data.get('field'),
+            'profile_picture': request.data.get('profile_picture')
+        }
+        data.get('user').pop('username', None)
+        print(data.get('user'))
+        serializer = AuthorSerializer(instance = author_instance, data = data)
+        if serializer.is_valid():
+            serializer.update()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserAPIViewByID(APIView):
     def get_object(self, id):
         try:

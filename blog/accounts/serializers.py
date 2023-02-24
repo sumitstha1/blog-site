@@ -37,8 +37,8 @@ class AuthorSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
-        fields = "__all__"
         model = Author
+        fields = "__all__"
 
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -49,3 +49,12 @@ class AuthorSerializer(serializers.ModelSerializer):
             return author
         else:
             raise serializers.ValidationError(user_serializer.errors)
+
+    def update(self, instance, validated_data):
+        if 'user' in validated_data:
+            user_data = validated_data.pop('user')
+            user_data.pop('username', None)
+            user_data.pop('email', None)
+            validated_data['user'] = user_data
+
+        return super().update(instance, validated_data)
