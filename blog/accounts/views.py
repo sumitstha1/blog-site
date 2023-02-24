@@ -46,7 +46,6 @@ class SuperUserCreationAPIView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserAPIView(APIView):
-    permission_classes = [AdminPermission]
     def get(self, request):
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
