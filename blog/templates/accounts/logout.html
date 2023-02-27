@@ -1,0 +1,12 @@
+{% extends "base/base.html" %} 
+{% block content %}
+<div class="card text-center my-5">
+    <div class="card-body">
+        <h5 class="card-title">Are you sure you want to Logout?</h5>
+        <form method="post">
+        {% csrf_token %}
+            <input type="submit" class="btn btn-outline-danger" value="Logout">
+        </form>
+    </div>
+</div>
+{% endblock content %}

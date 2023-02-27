@@ -12,20 +12,6 @@ import random
 class Genders(BaseModel):
     gender_name = models.CharField(max_length=10)
 
-class Author(BaseModel):
-    profile_picture = models.ImageField(upload_to='author_picture', null=True, blank=True)
-    user = models.OneToOneField(User, related_name='author_profile', on_delete=models.CASCADE)
-    bio = models.TextField(null=True, blank=True)
-    field = models.CharField(max_length=50, null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
-    email_token = models.CharField(max_length=100, null=True, blank=True)
-    is_email_verified = models.BooleanField(default=False)
-
-
-    def __str__(self) -> str:
-        return self.user.first_name
-
-
 class Client(BaseModel):
     user = models.OneToOneField(User, related_name='client_profile', on_delete=models.CASCADE)
     gender = models.ForeignKey(Genders, related_name='gender', on_delete=models.SET_NULL, null=True, blank=True)
@@ -40,3 +26,17 @@ class Client(BaseModel):
 
     def __str__(self) -> str:
         return self.user.first_name
+        
+class Author(BaseModel):
+    profile_picture = models.ImageField(upload_to='author_picture', null=True, blank=True)
+    user = models.OneToOneField(User, related_name='author_profile', on_delete=models.CASCADE)
+    bio = models.TextField(null=True, blank=True)
+    field = models.CharField(max_length=50, null=True, blank=True)
+    url = models.URLField(null=True, blank=True)
+    email_token = models.CharField(max_length=100, null=True, blank=True)
+    is_email_verified = models.BooleanField(default=False)
+
+
+    def __str__(self) -> str:
+        return self.user.first_name
+

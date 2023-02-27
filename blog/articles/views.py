@@ -9,6 +9,9 @@ from base.rest_permission import *
 
 
 # Create your views here.
+
+# API Views
+
 class CategoryApiView(APIView):
     def get(self, request):
         category = Category.objects.all()
@@ -54,11 +57,48 @@ class CategoryApiViewById(APIView):
         serializer = CategorySerializers(category_instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class PostApiView(generics.ListAPIView):
-    serializer_class = ArticleSerializers
-    queryset = Articles.objects.all()
+class PostApiView(APIView):
+    def get(self, request):
+        article = Articles.objects.all()
+        serializer = ArticleSerializers(article, many=True)
+        context = {
+            "status_code": 200,
+            "message": "Articles",
+            "Data": serializer.data,
+            "error": []
+        }
+        return Response(context, status=status.HTTP_200_OK)
+
 
 class ApprovePost(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AdminPermission]
     serializer_class = ArticleSerializers
     queryset = Articles.objects.all()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Web View
+
+def article(request, slug):
+    article = Articles.objects.get(slug = slug)
+    category = Category.objects.all()
+    context = {
+        'article_detail': article,
+        'categories': category,
+
+    }
+    return render(request, 'articles/article_detail.html', context)

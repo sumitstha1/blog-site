@@ -1,0 +1,22 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Home
+{% endblock title %}
+
+{% block content %}
+
+<div class="container">
+    {% for article in articles %}
+    <div class="card my-2">
+        <div class="card-body">
+            <h5 class="card-title">{{article.title}}</h5>
+            <p class="card-text">{{article.content | safe | truncatewords:60}}</p>
+            <a href="{% url 'product_detail' article.slug %}" class="btn btn-primary">Read more...</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock content %}
+

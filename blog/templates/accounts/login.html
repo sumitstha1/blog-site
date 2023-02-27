@@ -2,16 +2,18 @@
 
 {% block content %}
 <form method='POST' class="container my-5">
+{% include "base/alert.html" %}
+{% csrf_token %}
     <div class="mb-3 row">
         <label for="staticEmail" class="col-sm-2 col-form-label">Email</label>
         <div class="col-sm-10">
-            <input type="text" class="form-control" id="inputEmail">
+            <input type="email" class="form-control" id="inputEmail" name="email">
         </div>
     </div>
     <div class="mb-3 row">
         <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
         <div class="col-sm-10">
-            <input type="password" class="form-control" id="inputPassword">
+            <input type="password" class="form-control" id="inputPassword" name="password">
         </div>
     </div>
     <div class="mb-3 row">

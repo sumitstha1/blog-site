@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -10,9 +10,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from base.rest_permission import AdminPermission
-from rest_framework import generics
+from rest_framework import generics, permissions
+from knox.views import LoginView as KnoxLoginView
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 
 # Create your views here.
+
+# API View
+
+# API for getting superuser and creating super user
 class SuperUserCreationAPIView(APIView):
     def get(self, request):
         user = User.objects.filter(is_superuser = True)
@@ -45,6 +51,8 @@ class SuperUserCreationAPIView(APIView):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# API for getting all the users and creating new users
 class UserAPIView(APIView):
     def get(self, request):
         user = User.objects.all()
@@ -65,7 +73,10 @@ class UserAPIView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# API for getting authors and creating authors
 class AuthorAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
         author = Author.objects.all()
         serializer = AuthorSerializer(author, many=True)
@@ -101,6 +112,8 @@ class AuthorAPIView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+# API for getting author with uid and updating and deleting
 class AuthorAPIViewByID(APIView):
     def get_object(self, pk):
         try:
@@ -136,6 +149,15 @@ class AuthorAPIViewByID(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def delete(self, request, pk):
+        author_instance = self.get_object(pk)
+        if not author_instance:
+            return Response({"errors", "author not found"}, status=status.HTTP_404_NOT_FOUND)
+        author_instance.delete()
+        return Response({"message": "Author delete successfully"}, status=status.HTTP_200_OK)
+
+
+# API for getting user with id and updating and deleting
 class UserAPIViewByID(APIView):
     def get_object(self, id):
         try:
@@ -168,22 +190,80 @@ class UserAPIViewByID(APIView):
         user_instance.delete()
         return Response({"message": "Delete Successfully"}, status=status.HTTP_200_OK)
 
-class LoginView(APIView):
-    def post(self, request):
-        if 'email' not in request.data or 'password' not in request.data:
-            return Response({'message': 'Credentials missing'}, status=status.HTTP_400_BAD_REQUEST)
-        email = request.data.get('email')
-        password = request.data.get('password')
-        user = authenticate(request, username=email, password=password)
-        if user:
-            login(request, user)
-            return Response({'message': 'Login Success'}, status=status.HTTP_200_OK)
-        return Response({'message': 'Invalid Credentials', 'email': email, 'password': password}, status=status.HTTP_401_UNAUTHORIZED)
 
-def login(request):
+
+class LoginAPI(KnoxLoginView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, format=None):
+        data = {
+            'username': request.data.get('email'),
+            'password': request.data.get('password')
+        }
+        serializer = AuthTokenSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        login(request, user)
+        return super(LoginAPI, self).post(request, format=None)
+
+
+
+
+
+
+
+
+# Django views
+def author_login(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        author_user = User.objects.filter(username = email)
+
+        if not author_user.exists():
+            messages.warning(request, 'Sorry! Your account is not registered yet.')
+            return HttpResponseRedirect(request.path_info)
+
+        if not author_user[0].author_profile.is_email_verified:
+            messages.warning(request, 'Sorry! Your account is not verified yet.')
+            return HttpResponseRedirect(request.path_info)
+
+        author_user = authenticate(username = email, password = password)
+        if author_user:
+            login(request, author_user)
+            return redirect('/')
+
+        messages.warning(request, 'Invalid credentials')
+        return HttpResponseRedirect(request.path_info)
     return render(request, 'accounts/login.html')
 
-def register(request):
+def client_login(request):
+    if request.method == "POST":
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        client_user = User.objects.filter(username = email)
+
+        if not client_user.exists():
+            messages.warning(request, 'Sorry! Your account is not registered yet.')
+            return HttpResponseRedirect(request.path_info)
+
+        if not client_user[0].client_profile.is_verified:
+            messages.warning(request, 'Sorry! Your account is not verified yet.')
+            return HttpResponseRedirect(request.path_info)
+
+        client_user = authenticate(username = email, password = password)
+        if client_user:
+            login(request, client_user)
+            return redirect('/')
+
+        messages.warning(request, 'Invalid credentials')
+        return HttpResponseRedirect(request.path_info)
+    return render(request, 'accounts/login.html')
+
+
+def client_register(request):
     if request.method == "POST":
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
@@ -228,3 +308,9 @@ def register_author(request):
         messages.success(request, 'An email has been sent on your mail.')
         return HttpResponseRedirect(request.path_info)
     return render(request, 'accounts/author_register.html')
+    
+def logout_page(request):
+    if request.method == "POST":
+        logout(request)
+        return redirect('/')
+    return render(request, 'accounts/logout.html')
