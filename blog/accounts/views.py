@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout
 import uuid
 from django.contrib import messages
@@ -10,11 +10,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from base.rest_permission import AdminPermission
-from rest_framework import generics, permissions
+from rest_framework import generics
+from rest_framework.permissions import *
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 
-# Create your views here.
+
 
 # API View
 
@@ -76,7 +77,7 @@ class UserAPIView(APIView):
 
 # API for getting authors and creating authors
 class AuthorAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         author = Author.objects.all()
         serializer = AuthorSerializer(author, many=True)
@@ -97,7 +98,7 @@ class AuthorAPIView(APIView):
                 'username': request.data['email'],
                 'email': request.data.get('email'),
                 'password': request.data.get('password'),
-                'is_staff': True
+                'is_staff': True,
             },
             'bio': request.data.get('bio'),
             'field': request.data.get('field'),
@@ -192,8 +193,9 @@ class UserAPIViewByID(APIView):
 
 
 
+# API View for generating authorization token for login
 class LoginAPI(KnoxLoginView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
         data = {
@@ -205,6 +207,62 @@ class LoginAPI(KnoxLoginView):
         user = serializer.validated_data['user']
         login(request, user)
         return super(LoginAPI, self).post(request, format=None)
+
+
+
+# API Views for changing the user password
+class ChangePasswordView(generics.UpdateAPIView):
+
+    serializer_class = ChangePasswordSerializer
+    model = User
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, queryset=None):
+        obj = self.request.user
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        if request.data.get('new_password') != request.data.get('confirm_password'):
+            return Response({"new_password": ["Didn't matched."]}, status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            'old_password': request.data.get('old_password'),
+            'new_password': request.data.get('new_password'),
+        }
+        self.object = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            # Check old password
+            if not self.object.check_password(serializer.data.get("old_password")):
+                return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
+            # set_password also hashes the password that the user will get
+            self.object.set_password(serializer.data.get("new_password"))
+            self.object.save()
+            response = {
+                'status': 'success',
+                'code': status.HTTP_200_OK,
+                'message': 'Password updated successfully',
+                'data': []
+            }
+            logout()
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+# API View for fetching the logged in user data
+class LoggedInUser(APIView):
+    permission_classes = (IsAuthenticated,)
+    def get_object(self, queryset = None):
+        user = self.request.user
+        return user
+    
+    def get(self, request):
+        self.user_obj = self.get_object()
+        serializer = UserSerializer(self.user_obj)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

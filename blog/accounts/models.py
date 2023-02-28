@@ -6,6 +6,11 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 import uuid
 import random
+from django.conf import settings
+
+from django.core.mail import send_mail
+from django.urls import reverse
+from django_rest_passwordreset.signals import reset_password_token_created
 
 # Create your models here.
 
@@ -40,3 +45,17 @@ class Author(BaseModel):
     def __str__(self) -> str:
         return self.user.first_name
 
+
+
+
+@receiver(reset_password_token_created)
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
+
+    email_plaintext_message = "{}?token={}".format(reverse('password_reset:reset-password-request'), reset_password_token.key)
+
+    send_mail(
+        "Password Reset for {title}".format(title="requested user."),
+        email_plaintext_message,
+        settings.EMAIL_HOST_USER,
+        [reset_password_token.user.email]
+    )
