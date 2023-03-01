@@ -87,6 +87,8 @@ class AuthorAPIView(APIView):
             "Data": serializer.data,
             "error": []
         }
+        if not author:
+            return Response({"error": "No authors found."}, status=status.HTTP_204_NO_CONTENT)
         return Response(context, status=status.HTTP_200_OK)
 
     def post(self, request):

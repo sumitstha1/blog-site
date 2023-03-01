@@ -17,7 +17,11 @@ from django_rest_passwordreset.signals import reset_password_token_created
 class Genders(BaseModel):
     gender_name = models.CharField(max_length=10)
 
+    def __str__(self) -> str:
+        return self.gender_name
+
 class Client(BaseModel):
+    profile_picture = models.ImageField(upload_to='client_picture', null=True, blank=True)
     user = models.OneToOneField(User, related_name='client_profile', on_delete=models.CASCADE)
     gender = models.ForeignKey(Genders, related_name='gender', on_delete=models.SET_NULL, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
