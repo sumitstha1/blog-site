@@ -118,6 +118,7 @@ class AuthorAPIView(APIView):
 
 # API for getting author with uid and updating and deleting
 class AuthorAPIViewByID(APIView):
+    permission_classes = [AdminPermission]
     def get_object(self, pk):
         try:
             return Author.objects.get(pk = pk)
@@ -162,6 +163,7 @@ class AuthorAPIViewByID(APIView):
 
 # API for getting user with id and updating and deleting
 class UserAPIViewByID(APIView):
+    permission_classes = [AdminPermission]
     def get_object(self, id):
         try:
             return User.objects.get(id = id)
