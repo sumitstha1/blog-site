@@ -1,23 +1,32 @@
 {% extends "base/base.html" %}
 
+{% block title %}
+Register
+{% endblock title %}
+
 {% block content %}
-<form method='POST' class="container my-5" action="{% url 'register' %}">
+<form method='POST' class="container my-5" action="{% url 'client_register' %}">
 {% csrf_token %}
 {% include "base/alert.html" %}
     <div class="input-group">
         <span class="input-group-text">First and last name</span>
-        <input type="text" aria-label="First name" class="form-control" name="first_name">
-        <input type="text" aria-label="Last name" class="form-control" name="last_name">
+        <input type="text" aria-label="First name" class="form-control" required name="first_name">
+        <input type="text" aria-label="Last name" class="form-control" required name="last_name">
     </div>
 
     <div class="mb-3">
         <label for="exampleFormControlInput1" class="form-label">Email address</label>
-        <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="name@example.com" name="email">
+        <input type="email" class="form-control" id="exampleFormControlInput1" required placeholder="name@example.com" name="email">
     </div>
 
     <div class="mb-3">
         <label for="exampleFormControlInput1" class="form-label">Password</label>
-        <input type="password" class="form-control" id="inputPassword" placeholder="enter your password..." name="password">
+        <input type="password" class="form-control" id="inputPassword" required placeholder="Enter your password..." name="password1">
+    </div>
+
+    <div class="mb-3">
+        <label for="exampleFormControlInput1" class="form-label">Confirm Password</label>
+        <input type="password" class="form-control" id="inputPassword" required placeholder="Confirm your password..." name="password2">
     </div>
 
     <div class="mb-3 row">

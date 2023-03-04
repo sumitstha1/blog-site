@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout
@@ -14,7 +14,10 @@ from rest_framework import generics
 from rest_framework.permissions import *
 from knox.views import LoginView as KnoxLoginView
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-
+from django.conf import settings
+from django.db.models.signals import post_save
+from base.email import *
+from django.dispatch import receiver
 
 
 # API View
@@ -330,22 +333,45 @@ def client_register(request):
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
-        password = request.POST.get('password')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
 
+        if password1 != password2:
+            messages.warning(request, "Password didn't matched!!!")
+            return HttpResponseRedirect(request.path_info)
         user_obj = User.objects.filter(username = email)
 
         if user_obj.exists():
             messages.warning(request, 'Email is already exists')
             return HttpResponseRedirect(request.path_info)
 
-        user_obj = User.objects.create(first_name = first_name, last_name = last_name, email = email, password = password, username = email)
-        user_obj.set_password(password)
+        user_obj = User.objects.create(first_name = first_name, last_name = last_name, email = email, password = password1, username = email)
+        user_obj.set_password(password1)
+        email_token = str(uuid.uuid4())
+        Client.objects.create(user = user_obj, email_token = email_token)
+        email = email
+        send_email_token_otp_mail(email, email_token)
         user_obj.save()
-        client = Client.objects.create(user = user_obj, nickname = "Sumit")
-        client.save()
+
         messages.success(request, 'An email has been sent on your mail.')
         return render(request, 'accounts/register.html')
     return render(request, 'accounts/register.html')
+
+
+def activate_client_account(request, email_token):
+    try:
+        user = Client.objects.get(email_token = email_token)
+        if user.is_verified:
+            return HttpResponse("The requested user is already verified!!!")
+    except:
+        return HttpResponse("Invalid Token!!!")
+    
+    
+    user.is_verified = True
+    user.save()
+    messages.success(request, 'Your account is now verified. Now please login to continue.')
+    return redirect('client_login')
+
     
 
 def register_author(request):

@@ -17,5 +17,6 @@ urlpatterns = [
     path('login/', client_login, name='client_login'),
     path('register/', client_register, name='client_register'),
     path('logout/', logout_page, name='logout'),
-    path('author-register/', register_author, name='register_author')
+    path('author-register/', register_author, name='register_author'),
+    path('activate/<email_token>', activate_client_account, name='activate_client_account'),
 ]

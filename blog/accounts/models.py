@@ -25,10 +25,9 @@ class Client(BaseModel):
     user = models.OneToOneField(User, related_name='client_profile', on_delete=models.CASCADE)
     gender = models.ForeignKey(Genders, related_name='gender', on_delete=models.SET_NULL, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    nickname = models.CharField(max_length=100)
+    nickname = models.CharField(max_length=100, null=True, blank=True)
     company = models.CharField(max_length=100, null=True, blank=True)
     title = models.CharField(max_length=100, null=True, blank=True)
-    otp = models.CharField(max_length=6, null=True, blank=True)
     email_token = models.CharField(max_length=100, null=True, blank=False)
     is_verified = models.BooleanField(default=False)
 
@@ -48,6 +47,9 @@ class Author(BaseModel):
 
     def __str__(self) -> str:
         return self.user.first_name
+    
+    def first_name(self):
+        return self.user.first_name
 
 
 
@@ -63,3 +65,4 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         settings.EMAIL_HOST_USER,
         [reset_password_token.user.email]
     )
+
